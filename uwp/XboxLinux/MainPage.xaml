@@ -138,9 +138,10 @@
             </StackPanel>
         </RelativePanel>
         <RelativePanel>
-            <Button Content="V86" x:Name="ButtonV86" Background="IndianRed" HorizontalAlignment="Left" Width="300" Height="500" Click="ButtonV86_Click" BorderBrush="red"/>
-            <Button Content="Halfix" x:Name="ButtonHalfix" Background="GreenYellow" RelativePanel.RightOf="ButtonV86" Width="300" Height="500" Click="ButtonHalfix_Click" BorderBrush="green" Margin="10,0,0,0"/>
-            <Button Content="BasiliskII" x:Name="ButtonBasiliskII" Background="SteelBlue"  RelativePanel.RightOf="ButtonHalfix" Width="300" Height="500" Click="ButtonBasiliskII_Click" BorderBrush="blue" Margin="10,0,0,0"/>
+            <Button Content="V86" x:Name="ButtonV86" Background="IndianRed" HorizontalAlignment="Left" Width="200" Height="500" Click="ButtonV86_Click" BorderBrush="red"/>
+            <Button Content="Halfix" x:Name="ButtonHalfix" Background="GreenYellow" RelativePanel.RightOf="ButtonV86" Width="200" Height="500" Click="ButtonHalfix_Click" BorderBrush="green" Margin="10,0,0,0"/>
+            <Button Content="Halfix(Local)" x:Name="ButtonHalfix2" Background="YellowGreen" RelativePanel.RightOf="ButtonHalfix" Width="200" Height="500" Click="ButtonHalfix2_Click" BorderBrush="green" Margin="10,0,0,0"/>
+            <Button Content="BasiliskII" x:Name="ButtonBasiliskII" Background="SteelBlue"  RelativePanel.RightOf="ButtonHalfix2" Width="200" Height="500" Click="ButtonBasiliskII_Click" BorderBrush="blue" Margin="10,0,0,0"/>
         </RelativePanel>
     </Grid>
 </Page>
