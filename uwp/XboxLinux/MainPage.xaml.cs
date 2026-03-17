@@ -105,6 +105,7 @@ namespace Xbox_Linux
             ButtonHalfix.Click += ButtonHalfix_Click;
             ButtonHalfix2.Click += ButtonHalfix2_Click;
             ButtonBasiliskII.Click += ButtonBasiliskII_Click;
+            ButtonDebian.Click += ButtonDebian_Click;
         }
 
         private async void InitializeAsyncV86()
@@ -297,6 +298,7 @@ namespace Xbox_Linux
             ButtonHalfix.Visibility = Visibility.Collapsed;
             ButtonHalfix2.Visibility = Visibility.Collapsed;
             ButtonBasiliskII.Visibility = Visibility.Collapsed;
+            ButtonDebian.Visibility = Visibility.Collapsed;
             InitializeAsyncV86();
         }
 
@@ -311,6 +313,7 @@ namespace Xbox_Linux
             ButtonHalfix.Visibility = Visibility.Collapsed;
             ButtonHalfix2.Visibility = Visibility.Collapsed;
             ButtonBasiliskII.Visibility = Visibility.Collapsed;
+            ButtonDebian.Visibility = Visibility.Collapsed;
             InitializeAsyncHalfix();
         }
 
@@ -325,6 +328,7 @@ namespace Xbox_Linux
             ButtonHalfix.Visibility = Visibility.Collapsed;
             ButtonHalfix2.Visibility = Visibility.Collapsed;
             ButtonBasiliskII.Visibility = Visibility.Collapsed;
+            ButtonDebian.Visibility = Visibility.Collapsed;
             InitializeAsyncBasiliskII();
         }
 
@@ -339,7 +343,45 @@ namespace Xbox_Linux
             ButtonHalfix.Visibility = Visibility.Collapsed;
             ButtonHalfix2.Visibility = Visibility.Collapsed;
             ButtonBasiliskII.Visibility = Visibility.Collapsed;
+            ButtonDebian.Visibility = Visibility.Collapsed;
             InitializeAsyncHalfix2();
+        }
+
+        private async void InitializeAsyncDebian()
+        {
+            await Terminal.EnsureCoreWebView2Async();
+
+            // Set the mapping from a virtual host name to a folder in the package
+            Terminal.CoreWebView2.SetVirtualHostNameToFolderMapping(
+                "app.example", // The virtual host name mapped to virtual machines
+                               // - leave as app.example for performance!
+                "Virtual_Machines5", // Debian virtual machine resource
+                CoreWebView2HostResourceAccessKind.Allow // Disable CORS
+            );
+
+            Terminal.CoreWebView2.Settings.IsScriptEnabled = true;
+            Terminal.CoreWebView2.Settings.IsWebMessageEnabled = true;
+            Terminal.CoreWebView2.Settings.IsNonClientRegionSupportEnabled = true;
+            Terminal.CoreWebView2.Settings.AreHostObjectsAllowed = true;
+            Terminal.CoreWebView2.Settings.IsGeneralAutofillEnabled = false;
+            Terminal.CoreWebView2.Settings.IsZoomControlEnabled = false;
+            Terminal.CoreWebView2.Settings.AreDevToolsEnabled = false;
+            Terminal.Source = new Uri("http://app.example/index.html");
+        }
+
+        private void ButtonDebian_Click(object sender, RoutedEventArgs e)
+        {
+            VirtualKeyboard1.Visibility = Visibility.Visible;
+            VirtualKeyboard2.Visibility = Visibility.Visible;
+            VirtualKeyboard3.Visibility = Visibility.Visible;
+            VirtualKeyboard4.Visibility = Visibility.Visible;
+            VirtualKeyboard5.Visibility = Visibility.Visible;
+            ButtonV86.Visibility = Visibility.Collapsed;
+            ButtonHalfix.Visibility = Visibility.Collapsed;
+            ButtonHalfix2.Visibility = Visibility.Collapsed;
+            ButtonBasiliskII.Visibility = Visibility.Collapsed;
+            ButtonDebian.Visibility = Visibility.Collapsed;
+            InitializeAsyncDebian();
         }
     }
 }
