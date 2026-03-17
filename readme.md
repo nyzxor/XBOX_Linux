@@ -14,8 +14,9 @@ Emulators:
 - Halfix
 - Halfix(Local) - disc.iso(SliTaz)
 - BasiliskII - disk(Mac OS 7.5.3)
+- Debian - V86 optimized for Debian i386 (see tools/README.md for image build instructions)
 
-The K1, K2, K3, K4 and K5 buttons only change the visibility of parts of the virtual keyboard and it only works on v86.
+The K1, K2, K3, K4 and K5 buttons only change the visibility of parts of the virtual keyboard and it works on V86 and Debian.
 
 Builds: https://drive.google.com/drive/folders/1n9jw151wiW8l8GhVlZkrxvNmP2NsF8KU?usp=sharing
 

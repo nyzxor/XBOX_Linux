@@ -1,15 +1,20 @@
 <!doctype html>
-<title>Xbox Linux</title>
+<title>Xbox Linux - V86</title>
 <script src="libv86.js"></script>
 <script>
 "use strict";
 
 window.onload = function()
 {
+    // Adaptive memory: detect available memory for best performance
+    var memMB = 512; // Safe default
+    if (navigator.deviceMemory && navigator.deviceMemory >= 4) memMB = 1024;
+    if (navigator.deviceMemory && navigator.deviceMemory >= 8) memMB = 2048;
+
     var emulator = window.emulator = new V86({
         wasm_path: "v86.wasm",
-        memory_size: 3.9 * 1024 * 1024 * 1024,
-        vga_memory_size: 512 * 1024 * 1024,
+        memory_size: memMB * 1024 * 1024,
+        vga_memory_size: 32 * 1024 * 1024,
         screen_container: document.getElementById("screen_container"),
         bios: {
             url: "seabios.bin",
@@ -24,6 +29,7 @@ window.onload = function()
 ////Description: Hard Drive #1
 //        hda: {
 //            url: "",
+//            async: true,
 //        },
 ////Description: Hard Drive #2
 //        hdb: {
@@ -33,29 +39,22 @@ window.onload = function()
 //        fda: {
 //            url: "",
 //        },
-////Description: Floppy Disk #2
-//        fdb: {
-//            url: "",
-//        },
 ////Description: Save State
 //        initial_state: {
-//            url: "",
-//        },
-////Description: Mutiboot Loader Image
-//        multiboot: {
 //            url: "",
 //        },
 ////Description: bz compressed bootloader + vmlinux kernel
 //        bzimage: {
 //            url: "",
 //        },
-////Description: Save State
+////Description: Initial ramdisk
 //        initrd: {
 //            url: "",
-        //        },
+//        },
         network_relay_url: "wss://relay.widgetry.org",
         acpi: true,
         autostart: true,
+        uart1: true,
     });
 }
 </script>

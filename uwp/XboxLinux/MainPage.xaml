@@ -142,6 +142,7 @@
             <Button Content="Halfix" x:Name="ButtonHalfix" Background="GreenYellow" RelativePanel.RightOf="ButtonV86" Width="200" Height="500" Click="ButtonHalfix_Click" BorderBrush="green" Margin="10,0,0,0"/>
             <Button Content="Halfix(Local)" x:Name="ButtonHalfix2" Background="YellowGreen" RelativePanel.RightOf="ButtonHalfix" Width="200" Height="500" Click="ButtonHalfix2_Click" BorderBrush="green" Margin="10,0,0,0"/>
             <Button Content="BasiliskII" x:Name="ButtonBasiliskII" Background="SteelBlue"  RelativePanel.RightOf="ButtonHalfix2" Width="200" Height="500" Click="ButtonBasiliskII_Click" BorderBrush="blue" Margin="10,0,0,0"/>
+            <Button Content="Debian" x:Name="ButtonDebian" Background="DarkOrange" RelativePanel.RightOf="ButtonBasiliskII" Width="200" Height="500" Click="ButtonDebian_Click" BorderBrush="OrangeRed" Margin="10,0,0,0"/>
         </RelativePanel>
     </Grid>
 </Page>

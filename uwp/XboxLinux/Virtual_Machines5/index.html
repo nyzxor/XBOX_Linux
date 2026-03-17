@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Xbox Linux - Debian</title>
+<style>
+    html, body {
+        background-color: #0a0a0a;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        height: 100%;
+    }
+    #screen_container {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    #screen_container > div {
+        white-space: pre;
+        font: 14px monospace;
+        font-size: clamp(0.7rem, 2.2vh, 1.6rem);
+        line-height: 1.2;
+    }
+    #screen_container canvas {
+        image-rendering: pixelated;
+        max-width: 100%;
+        max-height: 100%;
+    }
+    #loading {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: #00ff41;
+        font-family: monospace;
+        font-size: 16px;
+        text-align: center;
+        z-index: 100;
+    }
+    #loading .spinner {
+        display: inline-block;
+        width: 40px;
+        height: 40px;
+        border: 3px solid rgba(0, 255, 65, 0.3);
+        border-radius: 50%;
+        border-top-color: #00ff41;
+        animation: spin 1s ease-in-out infinite;
+        margin-bottom: 15px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    #loading .progress {
+        margin-top: 10px;
+        font-size: 14px;
+        color: #888;
+    }
+    #status-bar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 24px;
+        background: #1a1a2e;
+        color: #00ff41;
+        font-family: monospace;
+        font-size: 12px;
+        display: flex;
+        align-items: center;
+        padding: 0 10px;
+        gap: 20px;
+        z-index: 50;
+        border-top: 1px solid #333;
+    }
+    #status-bar .sep { color: #333; }
+</style>
+</head>
+<body>
+
+<div id="loading">
+    <div class="spinner"></div>
+    <div>Booting Debian...</div>
+    <div class="progress" id="load-progress">Initializing emulator</div>
+</div>
+
+<div id="screen_container">
+    <div style="white-space: pre; font: 14px monospace; font-size: clamp(0.7rem, 2.2vh, 1.6rem)"></div>
+    <canvas style="display: none"></canvas>
+</div>
+
+<div id="status-bar">
+    <span id="status-cpu">CPU: --</span>
+    <span class="sep">|</span>
+    <span id="status-mem">RAM: --</span>
+    <span class="sep">|</span>
+    <span id="status-state">State: Loading</span>
+    <span class="sep">|</span>
+    <span id="status-net">Net: --</span>
+</div>
+
+<script src="libv86.js"></script>
+<script>
+"use strict";
+
+// Performance monitoring
+var perfStats = {
+    startTime: Date.now(),
+    ipsCounter: 0,
+    lastIpsUpdate: 0
+};
+
+function updateProgress(msg) {
+    var el = document.getElementById("load-progress");
+    if (el) el.textContent = msg;
+}
+
+function hideLoading() {
+    var el = document.getElementById("loading");
+    if (el) el.style.display = "none";
+}
+
+function updateStatus(id, text) {
+    var el = document.getElementById(id);
+    if (el) el.textContent = text;
+}
+
+window.onload = function() {
+    updateProgress("Loading BIOS and disk image...");
+
+    // Detect available memory (Xbox Series S has ~8GB, Series X ~13.5GB)
+    // V86 runs in WebView2, so we're limited by the browser process memory
+    // 512MB is safe for Debian minimal, 1GB for comfortable usage
+    var memorySize = 512;  // MB - safe default for Debian minimal
+    var vgaMemory = 32;    // MB - enough for 1024x768 32bpp
+
+    // Try to detect if we have more memory available
+    if (navigator.deviceMemory) {
+        var deviceMem = navigator.deviceMemory; // GB
+        if (deviceMem >= 4) {
+            memorySize = 1024;  // 1GB for systems with 4GB+ available
+            vgaMemory = 64;
+        }
+        if (deviceMem >= 8) {
+            memorySize = 2048;  // 2GB for Xbox Series X
+            vgaMemory = 128;
+        }
+    }
+
+    updateProgress("Starting V86 with " + memorySize + "MB RAM...");
+
+    var emulator = window.emulator = new V86({
+        wasm_path: "v86.wasm",
+
+        // Memory configuration optimized for Debian
+        memory_size: memorySize * 1024 * 1024,
+        vga_memory_size: vgaMemory * 1024 * 1024,
+
+        screen_container: document.getElementById("screen_container"),
+
+        bios: {
+            url: "seabios.bin",
+        },
+        vga_bios: {
+            url: "vgabios.bin",
+        },
+
+        // Boot from CD-ROM (Debian ISO)
+        cdrom: {
+            url: "disc.iso",
+        },
+
+        // Hard drive for persistent storage (optional - uncomment if available)
+        // Users can create a persistent disk to save changes across sessions
+        // hda: {
+        //     url: "debian-persist.img",
+        //     async: true,
+        //     size: 2 * 1024 * 1024 * 1024,  // 2GB
+        // },
+
+        // Network support via WebSocket relay
+        network_relay_url: "wss://relay.widgetry.org",
+
+        // Hardware features
+        acpi: true,
+        autostart: true,
+
+        // Boot order: CD first, then HDD
+        boot_order: 0x213,
+
+        // UART/Serial for text console compatibility
+        uart1: true,
+        uart2: true,
+    });
+
+    // Event: Emulator started
+    emulator.add_listener("emulator-started", function() {
+        updateProgress("Emulator running, waiting for kernel...");
+        updateStatus("status-state", "State: Booting");
+    });
+
+    // Event: Screen update (VGA mode detected)
+    emulator.add_listener("screen-set-mode", function(is_graphical) {
+        if (is_graphical) {
+            hideLoading();
+            updateStatus("status-state", "State: Running (GUI)");
+        }
+    });
+
+    // Event: Serial output (text mode)
+    var serialBuffer = "";
+    var bootDetected = false;
+    emulator.add_listener("serial0-output-byte", function(byte) {
+        var chr = String.fromCharCode(byte);
+        serialBuffer += chr;
+
+        // Detect boot progress
+        if (!bootDetected && serialBuffer.indexOf("login:") !== -1) {
+            bootDetected = true;
+            hideLoading();
+            updateStatus("status-state", "State: Running");
+        }
+
+        // Keep serial buffer from growing too large
+        if (serialBuffer.length > 10000) {
+            serialBuffer = serialBuffer.substring(serialBuffer.length - 5000);
+        }
+    });
+
+    // Performance monitoring
+    setInterval(function() {
+        try {
+            var cpuInfo = emulator.get_instruction_counter();
+            if (cpuInfo) {
+                var now = Date.now();
+                var elapsed = (now - perfStats.lastIpsUpdate) / 1000;
+                if (elapsed > 0 && perfStats.lastIpsUpdate > 0) {
+                    var ips = (cpuInfo - perfStats.ipsCounter) / elapsed;
+                    var mips = (ips / 1000000).toFixed(1);
+                    updateStatus("status-cpu", "CPU: " + mips + " MIPS");
+                }
+                perfStats.ipsCounter = cpuInfo;
+                perfStats.lastIpsUpdate = now;
+            }
+        } catch(e) {}
+
+        updateStatus("status-mem", "RAM: " + memorySize + "MB");
+
+        // Auto-hide loading after 30 seconds regardless
+        if (Date.now() - perfStats.startTime > 30000) {
+            hideLoading();
+        }
+    }, 2000);
+
+    // Network status detection
+    emulator.add_listener("net0-connected", function() {
+        updateStatus("status-net", "Net: Connected");
+    });
+
+    // Handle save state (Ctrl+F2 to save, Ctrl+F3 to restore)
+    document.addEventListener("keydown", function(e) {
+        if (e.ctrlKey && e.key === "F2") {
+            e.preventDefault();
+            emulator.save_state().then(function(state) {
+                var blob = new Blob([state]);
+                var a = document.createElement("a");
+                a.href = URL.createObjectURL(blob);
+                a.download = "debian-v86-state.bin";
+                a.click();
+                updateStatus("status-state", "State: Saved!");
+                setTimeout(function() {
+                    updateStatus("status-state", "State: Running");
+                }, 2000);
+            });
+        }
+    });
+};
+</script>
+</body>
+</html>
